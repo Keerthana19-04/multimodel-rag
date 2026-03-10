@@ -63,14 +63,39 @@ client = chromadb.Client()
 collection = client.create_collection(name="day2_sentences")
 
 # Add all sentences with their embeddings
+# collection.add(
+#     documents=sentences,
+#     embeddings=embeddings.tolist(),
+#     ids=[f"sentence_{i}" for i in range(len(sentences))]
+# )
+
+# print(f"✅ Stored {len(sentences)} sentences in ChromaDB!")
+
+
+# # Replace your collection.add() with this:
 collection.add(
     documents=sentences,
     embeddings=embeddings.tolist(),
-    ids=[f"sentence_{i}" for i in range(len(sentences))]
+    ids=[f"sentence_{i}" for i in range(len(sentences))],
+    metadatas=[{
+        "source": "day2_test",
+        "category": "animals" if any(w in s.lower() 
+                    for w in ["cat","dog","fish"]) 
+                    else "other",
+        "char_count": len(s)
+    } for s in sentences]
 )
 
-print(f"✅ Stored {len(sentences)} sentences in ChromaDB!")
+# Now query WITH metadata filter:
+results = collection.query(
+    query_embeddings=embeddings,
+    n_results=3,
+    where={"category": "animals"}  # filter!
+)
 
+print("\nFiltered search (animals only):")
+for doc in results['documents'][0]:
+    print(f"→ {doc}")
 # Now query ChromaDB
 print("\n" + "="*50)
 print("QUERYING CHROMADB")
@@ -144,7 +169,7 @@ questions = [
 ]
 
 for question in questions:
-    print(f"\n❓ Question: {question}")
+    print(f"\n Question: {question}")
     answer, chunks = mini_rag(question)
-    print(f"📚 Retrieved: {chunks}")
-    print(f"🤖 Answer: {answer}")
+    print(f" Retrieved: {chunks}")
+    print(f" Answer: {answer}")
